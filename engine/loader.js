@@ -23,7 +23,6 @@ export class AssetLoader {
     this.promises.push(p);
   }
 
-  // (Aquí podríamos añadir loadAudio, loadJSON, etc. más tarde)
   loadAudio(name, src) {
   const audio = new Audio(); // Crea un elemento <audio>
   audio.src = src;
@@ -47,7 +46,7 @@ export class AssetLoader {
       .then(() => this.assets)
       .catch((err) => {
         console.error("Fallo al cargar uno o más assets.", err);
-        return this.assets; // Resuelve igualmente para que el juego no se rompa
+        return this.assets; 
       });
   }
 }

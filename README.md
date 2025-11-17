@@ -26,15 +26,27 @@ Este proyecto es una demo técnica construida desde cero con **JavaScript (ESM)*
 
 ## 🎮 Controles
 
+### Teclado
+
 | Tecla | Acción |
 | :--- | :--- |
 | **WASD** / **Flechas** | Mover la nave |
 | **Espacio** | Disparar |
 | **P** | Pausar / Continuar el juego |
+| **Escape** | Volver al Menú Principal |
 | **M** | Activar / Desactivar Sonido (Mute) |
 | **H** | Activar / Desactivar Alto Contraste |
 | **Enter** | Iniciar el juego (desde el menú) |
 
+### Táctil
+
+| Área / Botón | Acción |
+| :--- | :--- |
+| **Mitad Izquierda** | Joystick virtual para mover la nave |
+| **Mitad Derecha** | Tocar para disparar |
+| **Botón ⏸** | Pausar / Continuar el juego |
+| **Botón 🔈/🔇** | Activar / Desactivar Sonido (Mute) |
+| **Botón ↩️** | Volver al Menú Principal |
 ---
 
 ## 🚀 Instrucciones de Ejecución
@@ -87,4 +99,4 @@ El juego sigue una estructura modular moderna, separando el "motor" del "juego".
 * [x] **Rendimiento (≥45 FPS):** Optimizado (fondo procedural, `requestAnimationFrame`).
 * [x] **Accesibilidad Mínima:** Implementado (Mute y Contraste).
 * [x] **Código Modular:** ¡Hecho! (Separado en `main`, `game`, `sfx`, `loader`).
-* [ ] **Controles Táctiles:** *Pendiente.*
+* [x] **Controles Táctiles:** Logrado, se activa un joystick al ingresar en modo táctil.
