@@ -10,7 +10,6 @@ export class SFX {
   setMuted(m){ this._muted = !!m; this.master.gain.value = this._muted ? 0 : 0.9; }
   get muted(){ return this._muted; }
 
-  // tono rápido utilitario
   _beep({ f=440, t=0.08, type='square', vol=0.15 }) {
     const now = this.ctx.currentTime;
     const o = this.ctx.createOscillator();
