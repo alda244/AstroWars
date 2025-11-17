@@ -155,6 +155,11 @@ export class Game {
       // Controles de estado rápidos
       if (k === 'enter' && (this.state==='menu'||this.state==='gameover')) { this.startNew(); }
       if (k === 'p') this.togglePause();
+      if (k === 'escape') {
+        if (this.state === 'playing' || this.state === 'paused') {
+          this.startMenu(); // Vuelve al menú principal
+        }
+      }
       if (k === ' ' || k === 'space' || k === 'spacebar') e.preventDefault();
     }, { passive:false });
     addEventListener("keyup", (e) => (this.keys[e.key.toLowerCase()] = false));
