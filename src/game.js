@@ -113,7 +113,7 @@ export class Game {
       this.music_track.pause(); // Detén la música
       this.music_track.currentTime = 0;
     }
-    if (this.onGameOver) this.onGameOver();
+    // if (this.onGameOver) this.onGameOver();
     const oldHiScore = parseInt(localStorage.getItem('aw_highscore') || '0');
     if (this.score > oldHiScore) {
       localStorage.setItem('aw_highscore', this.score.toString());
