@@ -5,9 +5,13 @@ import { AssetLoader } from './engine/loader.js';
 const canvas = document.getElementById('game');
 const overlay = document.getElementById('overlay');
 const startBtn = document.getElementById('startBtn');
-const pauseBtn = document.getElementById('pauseBtn');
-const muteBtn = document.getElementById('muteBtn');
+// const pauseBtn = document.getElementById('pauseBtn'); // ya no existe en overlay
+const muteBtn = document.getElementById('muteBtn');     // puede no existir (ya no está en overlay)
 const contrastBtn = document.getElementById('contrastBtn');
+const gameUi = document.getElementById('game-ui');
+const uiPauseBtn = document.getElementById('uiPauseBtn');
+const uiMuteBtn  = document.getElementById('uiMuteBtn');
+const uiMenuBtn  = document.getElementById('uiMenuBtn');
 
 const loader = new AssetLoader();
 const loadingIndicator = document.createElement('p'); // Indicador simple
@@ -42,12 +46,22 @@ loader.loadAll().then((assets) => {
 
  // UI helpers
  function updateMuteButton(){
-   muteBtn.textContent = sfx.muted ? '🔇 Sonido: OFF' : '🔈 Sonido: ON';
-   muteBtn.setAttribute('aria-pressed', sfx.muted ? 'true':'false');
+   if (muteBtn) {
+     muteBtn.textContent = sfx.muted ? '🔇 Sonido: OFF' : '🔈 Sonido: ON';
+     muteBtn.setAttribute('aria-pressed', sfx.muted ? 'true':'false');
+   }
+   if (uiMuteBtn) {
+     uiMuteBtn.innerHTML = sfx.muted
+       ? '<span class="icon">🔇</span><span class="label">Sonido: OFF</span>'
+       : '<span class="icon">🔈</span><span class="label">Sonido: ON</span>';
+     uiMuteBtn.setAttribute('aria-pressed', sfx.muted ? 'true':'false');
+   }
  }
  function toggleOverlay(show){
    overlay.classList.toggle('hidden', !show);
    overlay.setAttribute('aria-hidden', show ? 'false' : 'true');
+   // Mostrar barra superior solo cuando no hay overlay (jugando/pausa)
+   if (gameUi) gameUi.classList.toggle('hidden', show);
  }
 
  updateMuteButton();
@@ -59,14 +73,16 @@ loader.loadAll().then((assets) => {
    if (game.state === 'menu' || game.state === 'gameover') game.startNew();
    else game.resume();
  });
- pauseBtn.addEventListener('click', () => game.togglePause());
+ // if (pauseBtn) pauseBtn.addEventListener('click', () => game.togglePause()); // ya no hay pauseBtn en overlay
 
- muteBtn.addEventListener('click', () => {
-   sfx.setMuted(!sfx.muted);
-   localStorage.setItem('aw_muted', JSON.stringify(sfx.muted));
-   updateMuteButton();
-   game.setMusicMuted(sfx.muted);
- });
+ if (muteBtn) {
+   muteBtn.addEventListener('click', () => {
+     sfx.setMuted(!sfx.muted);
+     localStorage.setItem('aw_muted', JSON.stringify(sfx.muted));
+     updateMuteButton();
+     game.setMusicMuted(sfx.muted);
+   });
+ }
  contrastBtn.addEventListener('click', () => {
    document.body.classList.toggle('contrast');
    const on = document.body.classList.contains('contrast');
@@ -74,39 +90,24 @@ loader.loadAll().then((assets) => {
    localStorage.setItem('aw_contrast', JSON.stringify(on));
  });
 
- // --- NUEVO: listeners opcionales protegidos (si existen en el DOM) ---
- const howtoBtn = document.getElementById('howtoBtn');
- const backBtn = document.getElementById('backBtn');
- const menuBtn = document.getElementById('menuBtn');
- const menuMain = document.getElementById('menuMain');
- const menuHowto = document.getElementById('menuHowto');
+ // Barra superior
+ if (uiPauseBtn) uiPauseBtn.addEventListener('click', () => game.togglePause());
+ if (uiMuteBtn)  uiMuteBtn.addEventListener('click', () => {
+   sfx.setMuted(!sfx.muted);
+   localStorage.setItem('aw_muted', JSON.stringify(sfx.muted));
+   updateMuteButton();
+   game.setMusicMuted(sfx.muted);
+ });
+ if (uiMenuBtn)  uiMenuBtn.addEventListener('click', () => { game.startMenu(); });
 
- if (howtoBtn && menuMain && menuHowto) {
-   howtoBtn.addEventListener('click', () => {
-     menuMain.classList.add('hidden');
-     menuHowto.classList.remove('hidden');
-   });
- }
- if (backBtn && menuMain && menuHowto) {
-   backBtn.addEventListener('click', () => {
-     menuHowto.classList.add('hidden');
-     menuMain.classList.remove('hidden');
-   });
- }
- if (menuBtn) {
-   menuBtn.addEventListener('click', () => {
-     game.startMenu();
-   });
- }
-
- // Accesos rápidos accesibles
+ // Accesos rápidos
  window.addEventListener('keydown', (e) => {
    const k = e.key.toLowerCase();
    if (k === 'm'){ sfx.setMuted(!sfx.muted); localStorage.setItem('aw_muted', JSON.stringify(sfx.muted)); updateMuteButton(); game.setMusicMuted(sfx.muted); }
    if (k === 'h'){ document.body.classList.toggle('contrast'); const on=document.body.classList.contains('contrast'); contrastBtn.setAttribute('aria-pressed', on?'true':'false'); localStorage.setItem('aw_contrast', JSON.stringify(on)); }
  });
 
- // Comienza en menú
+ // Estado overlay/menú
  game.onShowMenu = () => { toggleOverlay(true); };
  // No mostrar overlay al morir; solo el mensaje dibujado en el canvas
  game.onGameOver = () => { toggleOverlay(false); };
