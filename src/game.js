@@ -32,6 +32,11 @@ export class Game {
     // ---- Input ----
     this.keys = {};
 
+    this.touch_joy_id = null; // ID del dedo que controla el joystick
+    this.touch_joy_x = 0;     // Posición X INICIAL del joystick
+    this.touch_joy_y = 0;     // Posición Y INICIAL del joystick
+    this.touch_joy_dx = 0;    // Delta X actual (cuánto se ha movido)
+    this.touch_joy_dy = 0;    // Delta Y actual
     // ---- Estado general ----
     this.lastTime = 0; this.running = true;
     this.score = 0; this.lives = 3;
@@ -124,6 +129,9 @@ export class Game {
     this.asteroids=[]; this.wave=1; this.killsThisWave=0; this.targetKills=0;
     this.spawnTimer=0; this.spawnInterval=1.0; this.maxOnScreen=8; this.spawnLocked=true;
     this.powerups=[]; this.powerupTimer=0; this.bannerTimer=0;
+    this.touch_joy_id = null;
+    this.touch_joy_dx = 0;
+    this.touch_joy_dy = 0;
   }
 
   _ensureLoop(){
@@ -150,6 +158,64 @@ export class Game {
       if (k === ' ' || k === 'space' || k === 'spacebar') e.preventDefault();
     }, { passive:false });
     addEventListener("keyup", (e) => (this.keys[e.key.toLowerCase()] = false));
+    this.canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // Prevenir zoom/scroll
+      for (const t of e.changedTouches) {
+        if (t.clientX < this.width / 2) {
+          // MITAD IZQUIERDA: Iniciar Joystick
+          if (this.touch_joy_id === null) { // Solo un joystick a la vez
+            this.touch_joy_id = t.identifier;
+            this.touch_joy_x = t.clientX;
+            this.touch_joy_y = t.clientY;
+            this.touch_joy_dx = 0;
+            this.touch_joy_dy = 0;
+          }
+        } else {
+          // MITAD DERECHA: Disparar (simula la barra espaciadora)
+          this.keys[" "] = true;
+        }
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      for (const t of e.changedTouches) {
+        if (t.identifier === this.touch_joy_id) {
+          // Actualizar el delta del joystick
+          this.touch_joy_dx = t.clientX - this.touch_joy_x;
+          this.touch_joy_dy = t.clientY - this.touch_joy_y;
+        }
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      for (const t of e.changedTouches) {
+        if (t.identifier === this.touch_joy_id) {
+          // Soltar el joystick
+          this.touch_joy_id = null;
+          this.touch_joy_dx = 0;
+          this.touch_joy_dy = 0;
+        } else {
+          // Dejar de disparar (si el dedo era de la derecha)
+          this.keys[" "] = false;
+        }
+      }
+    });
+    // (Igual para touchcancel)
+    this.canvas.addEventListener('touchcancel', (e) => { e.preventDefault();
+      for (const t of e.changedTouches) {
+        if (t.identifier === this.touch_joy_id) {
+          // Soltar el joystick
+          this.touch_joy_id = null;
+          this.touch_joy_dx = 0;
+          this.touch_joy_dy = 0;
+        } else {
+          // Dejar de disparar (si el dedo era de la derecha)
+          this.keys[" "] = false;
+        }
+      }
+    });
   }
 
   _resize() {
@@ -202,6 +268,24 @@ export class Game {
     if (this.keys["arrowright"]|| this.keys["d"]) mx += 1;
     if (this.keys["arrowup"]   || this.keys["w"]) my -= 1;
     if (this.keys["arrowdown"] || this.keys["s"]) my += 1;
+
+    if (this.touch_joy_id !== null) {
+      const maxDist = 60.0; // Distancia máxima del "stick"
+      let dx = this.touch_joy_dx;
+      let dy = this.touch_joy_dy;
+      const mag = Math.hypot(dx, dy);
+
+      if (mag > maxDist) { // Limitar la distancia
+        dx = (dx / mag) * maxDist;
+        dy = (dy / mag) * maxDist;
+      }
+      
+      if (mag > 1.0) { // "Deadzone" (ignora movimientos pequeños)
+        mx += dx / maxDist; // Añade la fuerza normalizada
+        my += dy / maxDist; // Añade la fuerza normalizada
+      }
+    }
+
     if (mx && my) { const k = Math.SQRT1_2; mx *= k; my *= k; }
 
     this.vx = mx * this.speed; this.vy = my * this.speed;
@@ -475,6 +559,33 @@ export class Game {
       if (this.doubleShot) c.fillText(`Disparo doble ${Math.ceil(this.doubleShotTimer)}s`, 12, 102);
       if (this.shield>0)   c.fillText(`Escudo ${Math.ceil(this.shield)}s`, 12, 122);
       if (this.damageTimer>0) c.fillText(`Daño ×${this.damageMultiplier}  ${Math.ceil(this.damageTimer)}s`, 12, 142);
+    }
+
+    if (this.state === 'playing' && this.touch_joy_id !== null) {
+      c.save();
+      c.globalAlpha = 0.3; // Semicransparente
+      c.fillStyle = "#fff";
+      const maxDist = 60.0;
+      
+      // Base del joystick (círculo grande)
+      c.beginPath();
+      c.arc(this.touch_joy_x, this.touch_joy_y, maxDist, 0, Math.PI * 2);
+      c.fill();
+      
+      // "Stick" móvil (círculo pequeño)
+      // (Calcula el delta limitado, igual que en update)
+      let dx = this.touch_joy_dx;
+      let dy = this.touch_joy_dy;
+      const mag = Math.hypot(dx, dy);
+      if (mag > maxDist) {
+        dx = (dx / mag) * maxDist;
+        dy = (dy / mag) * maxDist;
+      }
+      c.beginPath();
+      c.arc(this.touch_joy_x + dx, this.touch_joy_y + dy, 40, 0, Math.PI * 2);
+      c.fill();
+      
+      c.restore();
     }
 
     // Banner de oleada
