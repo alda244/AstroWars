@@ -1,7 +1,6 @@
-// main.js - ¡Este archivo está en la raíz de astro-wars/!
-import { Game } from './src/game.js'; // CAMBIADO: Debería ser './game.js' si game.js está en la raíz, o './src/game.js' si está en src/
-import { SFX } from './src/sfx.js';   // CAMBIADO: Debería ser './sfx.js' si sfx.js está en la raíz, o './src/sfx.js' si está en src/
-import { AssetLoader } from './engine/loader.js'; // CORREGIDO: la ruta del loader
+import { Game } from './src/game.js'; 
+import { SFX } from './src/sfx.js';   
+import { AssetLoader } from './engine/loader.js'; 
 
 const canvas = document.getElementById('game');
 const overlay = document.getElementById('overlay');
@@ -31,9 +30,7 @@ loader.loadImage('powerup_double', './assets/powerup_double.png');
 loader.loadImage('powerup_shield', './assets/powerup_shield.png');
 loader.loadImage('bullet', './assets/bullet.png');
 loader.loadAudio('music', './assets/music.mp3');
-// loader.loadImage('bullet', './assets/bullet.png');   // (Próximamente)
 
-// Mueve la lectura de preferencias aquí para que esté disponible antes del SFX
 const prefs = {
  muted: JSON.parse(localStorage.getItem('aw_muted') || 'false'),
  contrast: JSON.parse(localStorage.getItem('aw_contrast') || 'false'),
@@ -95,7 +92,7 @@ backBtn.addEventListener('click', () => {
     menuMain.classList.remove('hidden');
   });
 menuBtn.addEventListener('click', () => {
-    game.startMenu(); // Esta función ya existe en game.js y hace todo el trabajo
+    game.startMenu(); 
   });
 // Accesos rápidos accesibles
 window.addEventListener('keydown', (e) => {

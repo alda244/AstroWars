@@ -15,26 +15,23 @@ canvas { display:block; width:100%; height:100dvh; }
 /* Alto contraste */
 body.contrast{ --bg:#000; --fg:#fff; --card:#000; --accent:#fff; --accent-2:#ddd; }
 
-/* .overlay{
-  position:fixed; inset:0; display:flex; flex-direction:column; gap:16px;
-  align-items:center; justify-content:center; background:rgba(0,0,0,.4); padding:24px;
-} */
+
 .overlay {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
   background: var(--bg);
   color: var(--fg);
 
-  display: flex; /* <-- AÑADE ESTO */
-  flex-direction: column; /* <-- AÑADE ESTO */
-  align-items: center; /* <-- AÑADE ESTO (Centra horizontalmente) */
-  justify-content: center; /* <-- AÑADE ESTO (Centra verticalmente) */
-  gap: 20px; /* <-- Espacio entre elementos */
+  display: flex; 
+  flex-direction: column;
+  align-items: center; 
+  justify-content: center; 
+  gap: 20px; 
 
   z-index: 5;
   padding: 20px;
-  box-sizing: border-box; /* Incluye padding en el ancho/alto */
-  text-align: center; /* Para texto suelto como el "Consejo" */
+  box-sizing: border-box; 
+  text-align: center; 
 }
 
 .overlay.hidden {
@@ -102,13 +99,9 @@ body.contrast{ --bg:#000; --fg:#fff; --card:#000; --accent:#fff; --accent-2:#ddd
   margin-bottom: 20px;
 }
 
-/* Si tu logo.png YA dice "Astro Wars",
-  puedes ocultar el título de texto h1.
-*/
+
 #title {
   display: none; 
-  /* O si quieres mantenerlo por accesibilidad pero oculto: */
-  /* position: absolute; left: -9999px; */
 }
 
 #game-ui {
@@ -121,12 +114,10 @@ body.contrast{ --bg:#000; --fg:#fff; --card:#000; --accent:#fff; --accent-2:#ddd
   z-index: 10;
 }
 
-/* Oculta la UI si tiene la clase .hidden */
 #game-ui.hidden {
   display: none;
 }
 
-/* Haz los botones de la UI pequeños */
 #game-ui .btn {
   padding: 8px;
   font-size: 14px;

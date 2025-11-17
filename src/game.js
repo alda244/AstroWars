@@ -89,8 +89,8 @@ export class Game {
     this.state = 'menu';
     this._resetCore();
     if (this.music_track) {
-      this.music_track.pause(); // Detén la música en el menú
-      this.music_track.currentTime = 0; // Reinicia al principio
+      this.music_track.pause(); 
+      this.music_track.currentTime = 0;
     }
     if (this.onShowMenu) this.onShowMenu();
     this._ensureLoop();
@@ -100,7 +100,7 @@ export class Game {
     this.state = 'playing';
     this._startWave(1);
     if (this.music_track) {
-      this.music_track.play(); // ¡Inicia la música!
+      this.music_track.play(); 
     }
     this._ensureLoop();
   }
@@ -110,10 +110,9 @@ export class Game {
     this.state = 'gameover';
     this.sfx?.over();
     if (this.music_track) {
-      this.music_track.pause(); // Detén la música
+      this.music_track.pause(); 
       this.music_track.currentTime = 0;
     }
-    // if (this.onGameOver) this.onGameOver();
     const oldHiScore = parseInt(localStorage.getItem('aw_highscore') || '0');
     if (this.score > oldHiScore) {
       localStorage.setItem('aw_highscore', this.score.toString());
@@ -423,7 +422,6 @@ export class Game {
     }
 
     // Balas
-// Balas (Dibujo con sprites)
     const bulletSprite = this.assets.bullet;
     if (bulletSprite) { // Solo dibuja si el sprite se cargó
       
@@ -486,7 +484,6 @@ export class Game {
     for (const p of this.powerups) {
       let sprite;
       
-      // Asigna el sprite correcto basado en el tipo
       if (p.type === "life") {
         sprite = this.assets.powerup_life;
       } else if (p.type === "double") {
@@ -497,7 +494,6 @@ export class Game {
 
       if (!sprite) continue; // Si el sprite no está cargado, no dibuja nada
 
-      // Define el tamaño del sprite (ajusta '32' según sea necesario)
       const drawSize = 32; 
 
       c.save();
