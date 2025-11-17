@@ -177,6 +177,110 @@ game.onShowMenu = () => { toggleOverlay(true); };
 game.onGameOver = () => { toggleOverlay(true); };
 game.startMenu();
 
+// --- NUEVO: detección y activación de controles táctiles ---
+const touchControls = document.getElementById('touchControls');
+const touchStickEl = document.getElementById('touchStick');
+const touchFireEl = document.getElementById('touchFire');
+
+function showTouchControls() {
+  if (!touchControls) return;
+  touchControls.style.display = 'block'; // <- forzar visible (antes se dejaba '')
+  touchControls.removeAttribute('aria-hidden');
+  document.body.classList.add('using-touch');
+}
+
+// Si el dispositivo ya declara soporte touch, activamos de inmediato.
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+ showTouchControls();
+} else {
+ // Si no, activamos cuando ocurra el primer touch (soporta cambios dinámicos)
+ const onFirstTouch = (e) => {
+   showTouchControls();
+   window.removeEventListener('touchstart', onFirstTouch, { passive:false });
+ };
+ window.addEventListener('touchstart', onFirstTouch, { passive:false });
+}
+
+// --- NUEVO: mantener la inicialización de listeners táctiles como estaba,
+// pero solo si los elementos existen (esto ya permite que ambos inputs funcionen al mismo tiempo) ---
+if (touchStickEl && touchFireEl) {
+ let stickId = null;
+ let stickCenter = null;
+ const knob = touchStickEl.querySelector('.knob');
+
+ function resetStick() {
+   if (knob) knob.style.transform = 'translate(0px,0px)';
+   ['arrowleft','arrowright','arrowup','arrowdown'].forEach(k => game.keys[k] = false);
+   stickId = null; stickCenter = null;
+ }
+
+ function handleStickMove(clientX, clientY) {
+   if (!stickCenter) return;
+   const dx = (clientX - stickCenter.x) / (touchStickEl.clientWidth / 2);
+   const dy = (clientY - stickCenter.y) / (touchStickEl.clientHeight / 2);
+   const dead = 0.35;
+   game.keys['arrowleft']  = dx < -dead;
+   game.keys['arrowright'] = dx > dead;
+   game.keys['arrowup']    = dy < -dead;
+   game.keys['arrowdown']  = dy > dead;
+   if (knob) {
+     const max = 30;
+     const tx = Math.max(-max, Math.min(max, dx * max));
+     const ty = Math.max(-max, Math.min(max, dy * max));
+     knob.style.transform = `translate(${tx}px, ${ty}px)`;
+   }
+ }
+
+ touchStickEl.addEventListener('touchstart', (e) => {
+   e.preventDefault();
+   const t = e.changedTouches[0];
+   stickId = t.identifier;
+   const rect = touchStickEl.getBoundingClientRect();
+   stickCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+   handleStickMove(t.clientX, t.clientY);
+ }, { passive:false });
+
+ touchStickEl.addEventListener('touchmove', (e) => {
+   e.preventDefault();
+   for (const t of e.changedTouches) {
+     if (t.identifier === stickId) handleStickMove(t.clientX, t.clientY);
+   }
+ }, { passive:false });
+
+ touchStickEl.addEventListener('touchend', (e) => {
+   for (const t of e.changedTouches) {
+     if (t.identifier === stickId) resetStick();
+   }
+ }, { passive:false });
+
+ touchStickEl.addEventListener('touchcancel', resetStick, { passive:false });
+
+ // Botón de disparo (multitouch friendly)
+ let fireId = null;
+ touchFireEl.addEventListener('touchstart', (e) => {
+   e.preventDefault();
+   const t = e.changedTouches[0];
+   fireId = t.identifier;
+   game.keys[' '] = true; // espacio
+   touchFireEl.classList.add('active');
+ }, { passive:false });
+
+ function onFireEnd(e) {
+   for (const t of e.changedTouches) {
+     if (t.identifier === fireId) {
+       game.keys[' '] = false;
+       touchFireEl.classList.remove('active');
+       fireId = null;
+     }
+   }
+ }
+ touchFireEl.addEventListener('touchend', onFireEnd, { passive:false });
+ touchFireEl.addEventListener('touchcancel', onFireEnd, { passive:false });
+
+ // Limpieza si el canvas pierde foco (evita quedarse "pillado")
+ window.addEventListener('blur', () => { resetStick(); game.keys[' '] = false; });
+ }
+
 }).catch(err => {
  console.error("No se pudieron cargar los assets iniciales.", err);
  loadingIndicator.textContent = 'Error al cargar. Refresca la página.';
