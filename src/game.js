@@ -58,6 +58,31 @@ export class Game {
     // Banner
     this.bannerTimer = 0; this.bannerDuration = 1.6; this.bannerText = "";
     
+    // --- SUPERPODERES (estado y timers) ---
+    this.killsSinceLastPower = 0;
+    this.powerTargetKills = Math.floor(rand(6, 12)); // umbral inicial aleatorio
+    this.powerBannerText = "";    // texto corto cuando se concede un poder
+    this.powerBannerTimer = 0;    // duración del texto
+
+    // Guarda tamaños/velocidad originales para revertir
+    this._origPlayerWidth = this.playerWidth;
+    this._origPlayerHeight = this.playerHeight;
+    this._origRadius = this.radius;
+    this._origSpeed = this.speed;
+
+    // Encogerse + velocidad
+    this.shrinkActive = false;
+    this.shrinkTimer = 0;
+
+    // Barrera frontal que repele asteroides
+    this.barrierActive = false;
+    this.barrierTimer = 0;
+    this.barrierRadius = 84;  // radio de repulsión
+    this.barrierOffset = 44;  // distancia desde el centro del jugador hacia adelante
+    // Dirección de la barrera (alineada con el disparo)
+    this.barrierDirX = 0;
+    this.barrierDirY = -1;
+
     this.stars = []; 
     this._initStars();
 
@@ -113,7 +138,7 @@ export class Game {
       this.music_track.pause(); // Detén la música
       this.music_track.currentTime = 0;
     }
-    // if (this.onGameOver) this.onGameOver();
+    if (this.onGameOver) this.onGameOver();
     const oldHiScore = parseInt(localStorage.getItem('aw_highscore') || '0');
     if (this.score > oldHiScore) {
       localStorage.setItem('aw_highscore', this.score.toString());
@@ -129,6 +154,21 @@ export class Game {
     this.asteroids=[]; this.wave=1; this.killsThisWave=0; this.targetKills=0;
     this.spawnTimer=0; this.spawnInterval=1.0; this.maxOnScreen=8; this.spawnLocked=true;
     this.powerups=[]; this.powerupTimer=0; this.bannerTimer=0;
+    // --- reset de superpoderes ---
+    this.killsSinceLastPower = 0;
+    this.powerTargetKills = Math.floor(rand(6, 12));
+    this.powerBannerText = "";
+    this.powerBannerTimer = 0;
+    this.shrinkActive = false; this.shrinkTimer = 0;
+    this.barrierActive = false; this.barrierTimer = 0;
+    // restaurar tamaño/colisión/velocidad originales
+    this.playerWidth = this._origPlayerWidth;
+    this.playerHeight = this._origPlayerHeight;
+    this.radius = this._origRadius;
+    this.speed = this._origSpeed;
+    // Dirección por defecto de la barrera (arriba)
+    this.barrierDirX = 0;
+    this.barrierDirY = -1;
     this.touch_joy_id = null;
     this.touch_joy_dx = 0;
     this.touch_joy_dy = 0;
@@ -155,11 +195,6 @@ export class Game {
       // Controles de estado rápidos
       if (k === 'enter' && (this.state==='menu'||this.state==='gameover')) { this.startNew(); }
       if (k === 'p') this.togglePause();
-      if (k === 'escape') {
-        if (this.state === 'playing' || this.state === 'paused') {
-          this.startMenu(); // Vuelve al menú principal
-        }
-      }
       if (k === ' ' || k === 'space' || k === 'spacebar') e.preventDefault();
     }, { passive:false });
     addEventListener("keyup", (e) => (this.keys[e.key.toLowerCase()] = false));
@@ -298,7 +333,15 @@ export class Game {
     this.x = Math.max(this.radius, Math.min(this.width  - this.radius, this.x));
     this.y = Math.max(this.radius, Math.min(this.height - this.radius, this.y));
 
-    if (mx !== 0 || my !== 0) { this.lastDirX = mx; this.lastDirY = my; }
+    if (mx !== 0 || my !== 0) {
+      this.lastDirX = mx; this.lastDirY = my;
+      // NUEVO: mantener la barrera alineada con la dirección de disparo actual
+      const lmag = Math.hypot(this.lastDirX, this.lastDirY);
+      if (lmag > 0.01) {
+        this.barrierDirX = this.lastDirX / lmag;
+        this.barrierDirY = this.lastDirY / lmag;
+      }
+    }
 
     if (Math.hypot(this.vx, this.vy) > 1e-3) {
       const velAngle = Math.atan2(this.vy, this.vx);
@@ -318,6 +361,27 @@ export class Game {
     if (this.shield > 0) this.shield -= dt;
     if (this.doubleShotTimer > 0) this.doubleShotTimer -= dt; else this.doubleShot = false;
     if (this.damageTimer > 0) { this.damageTimer -= dt; if (this.damageTimer <= 0){ this.damageMultiplier=1; this.damageTimer=0; } }
+
+    // --- Timers de superpoderes ---
+    if (this.shrinkTimer > 0) {
+      this.shrinkTimer -= dt;
+      if (this.shrinkTimer <= 0) {
+        this.shrinkTimer = 0; this.shrinkActive = false;
+        // Revertir tamaño y velocidad
+        this.playerWidth = this._origPlayerWidth;
+        this.playerHeight = this._origPlayerHeight;
+        this.radius = this._origRadius;
+        this.speed = this._origSpeed;
+      }
+    }
+    if (this.barrierTimer > 0) {
+      this.barrierTimer -= dt;
+      if (this.barrierTimer <= 0) { this.barrierTimer = 0; this.barrierActive = false; }
+    }
+    if (this.powerBannerTimer > 0) {
+      this.powerBannerTimer -= dt;
+      if (this.powerBannerTimer <= 0) this.powerBannerTimer = 0;
+    }
 
     // Balas
     // Balas (Lógica de movimiento)
@@ -352,6 +416,25 @@ export class Game {
     }
     this.asteroids = this.asteroids.filter(a => a.y < this.height + a.r + 60 && !a.dead);
 
+    // --- Repulsión gradual con barrera (aceleración suave y alineada a disparo) ---
+    if (this.barrierActive) {
+      const bx = this.x + this.barrierDirX * (this.radius + this.barrierOffset);
+      const by = this.y + this.barrierDirY * (this.radius + this.barrierOffset);
+      const repulseStrength = 120; // aceleración base (px/s^2), ajustar para más/menos "lento"
+      for (const a of this.asteroids) {
+        const dx = a.x - bx, dy = a.y - by;
+        const dist = Math.hypot(dx, dy);
+        const minDist = a.r + this.barrierRadius;
+        if (dist > 0.0001 && dist < minDist) {
+          const nx = dx / dist, ny = dy / dist;               // dirección desde barrera hacia asteroide
+          const falloff = 1 - (dist / minDist);               // más fuerte cuanto más cerca
+          const accel = repulseStrength * falloff;            // aceleración resultante
+          a.vx += nx * accel * dt;                            // aplicar como aceleración (suave)
+          a.vy += ny * accel * dt * 0.9;                      // un poco menos en Y para estabilidad
+        }
+      }
+    }
+
     // Colisiones bala-asteroide
     for (const b of this.bullets) {
       for (const a of this.asteroids) {
@@ -361,6 +444,13 @@ export class Game {
           this.sfx?.hit();
           if (a.hp <= 0) {
             a.dead = true; this.killsThisWave += 1;
+            // --- Contador para superpoder y concesión aleatoria ---
+            this.killsSinceLastPower += 1;
+            if (this.killsSinceLastPower >= this.powerTargetKills) {
+              this.killsSinceLastPower = 0;
+              this.powerTargetKills = Math.floor(rand(6, 12));
+              this._grantRandomPower();
+            }
             this.score += 10 + Math.floor(a.r);
           }
         }
@@ -625,6 +715,72 @@ export class Game {
       c.font = "16px system-ui, sans-serif";
       c.fillText("Enter para reiniciar", this.width/2, this.height/2 + 20); c.textAlign = "start";
     }
+
+    // Dibujar barrera alineada con dirección de disparo
+    if (this.barrierActive) {
+      const bx = this.x + this.barrierDirX * (this.radius + this.barrierOffset);
+      const by = this.y + this.barrierDirY * (this.radius + this.barrierOffset);
+      const ang = Math.atan2(this.barrierDirY, this.barrierDirX);
+      c.save();
+      c.translate(bx, by);
+      c.rotate(ang);
+      c.globalAlpha = 0.9;
+      c.fillStyle = "rgba(123,223,242,0.12)";
+      c.beginPath(); c.arc(0, 0, this.barrierRadius, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = "rgba(123,223,242,0.45)"; c.lineWidth = 3;
+      c.beginPath(); c.arc(0, 0, this.barrierRadius, 0, Math.PI * 2); c.stroke();
+      c.restore();
+    }
+
+    // Banner corto del poder otorgado
+    if (this.powerBannerTimer > 0 && this.powerBannerText) {
+      c.save();
+      c.globalAlpha = Math.max(0, Math.min(1, this.powerBannerTimer / 2));
+      c.fillStyle = "#ffd36b";
+      c.font = "bold 20px system-ui, sans-serif";
+      c.textAlign = "center";
+      c.fillText(this.powerBannerText, this.width/2, 50);
+      c.restore();
+    }
+  }
+
+  // ======= Superpoderes =======
+  _grantRandomPower() {
+    const options = ["shrinkSpeed","barrier","extraLife"];
+    const pick = options[Math.floor(Math.random() * options.length)];
+    if (pick === "shrinkSpeed") this._activateShrinkSpeed();
+    else if (pick === "barrier") this._activateBarrier();
+    else this._activateExtraLife();
+  }
+
+  _activateShrinkSpeed() {
+    // Encoger y acelerar temporalmente
+    this.shrinkActive = true;
+    this.shrinkTimer = 8; // segundos
+    this.playerWidth = Math.max(32, this._origPlayerWidth * 0.62);
+    this.playerHeight = Math.max(32, this._origPlayerHeight * 0.62);
+    this.radius = Math.max(8, this._origRadius * 0.6);
+    this.speed = Math.min(1200, this._origSpeed * 1.45);
+    this.powerBannerText = "SUPER: Pequeño y rápido!";
+    this.powerBannerTimer = 2.2;
+    this.sfx?.power();
+  }
+
+  _activateBarrier() {
+    // Activa barrera que repele asteroides
+    this.barrierActive = true;
+    this.barrierTimer = 7; // segundos
+    this.powerBannerText = "SUPER: Barrera repelente!";
+    this.powerBannerTimer = 2.2;
+    this.sfx?.power();
+  }
+
+  _activateExtraLife() {
+    // Otorga vida extra inmediata
+    this.lives = (this.lives || 0) + 1;
+    this.powerBannerText = "SUPER: +1 Vida!";
+    this.powerBannerTimer = 2.2;
+    this.sfx?.power();
   }
 
   // ======= Gameplay helpers =======
@@ -632,12 +788,15 @@ export class Game {
     const mag = Math.hypot(this.lastDirX, this.lastDirY);
     if (mag < 0.01) return;
     const dirx = this.lastDirX / mag, diry = this.lastDirY / mag;
-    const bx = this.x + dirx * 18,  by = this.y + diry * 18;
 
+    // NUEVO: alinear la barrera exactamente con la dirección de disparo actual
+    this.barrierDirX = dirx;
+    this.barrierDirY = diry;
+
+    const bx = this.x + dirx * 18,  by = this.y + diry * 18;
     const addBullet = (dx, dy) => {
       this.bullets.push({ x: bx, y: by, vx: dx * this.bulletSpeed, vy: dy * this.bulletSpeed, r: 3, life: 1.2, dmg: this.damageMultiplier });
     };
-
     addBullet(dirx, diry);
     this.sfx?.shoot();
     if (this.doubleShot) {
@@ -648,7 +807,7 @@ export class Game {
     }
   }
 
- _spawnAsteroid() {
+  _spawnAsteroid() {
     const n = this.wave, baseSpeed = 70 + n * 8;
     const r = rand(12, 28); // Mantenemos el radio aleatorio para la colisión y la lógica
     const hp = Math.max(1, Math.round(r / 10 + (n - 1) * 0.6));

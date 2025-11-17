@@ -9,15 +9,9 @@ const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
 const muteBtn = document.getElementById('muteBtn');
 const contrastBtn = document.getElementById('contrastBtn');
-const howtoBtn = document.getElementById('howtoBtn');
-const backBtn = document.getElementById('backBtn');
-const menuBtn = document.getElementById('menuBtn')
-const menuMain = document.getElementById('menu-main');
-const menuHowto = document.getElementById('menu-howto');
-const gameUI = document.getElementById('game-ui');
+
 const loader = new AssetLoader();
 const loadingIndicator = document.createElement('p'); // Indicador simple
-
 loadingIndicator.textContent = 'Cargando assets...';
 loadingIndicator.style.color = 'white';
 document.body.appendChild(loadingIndicator);
@@ -57,7 +51,6 @@ function updateMuteButton(){
 function toggleOverlay(show){
  overlay.classList.toggle('hidden', !show);
  overlay.setAttribute('aria-hidden', show ? 'false' : 'true');
- gameUI.classList.toggle('hidden', show);
 }
 
 updateMuteButton();
@@ -85,18 +78,6 @@ contrastBtn.addEventListener('click', () => {
  localStorage.setItem('aw_contrast', JSON.stringify(on));
 });
 
-howtoBtn.addEventListener('click', () => {
-    menuMain.classList.add('hidden');
-    menuHowto.classList.remove('hidden');
-  });
-
-backBtn.addEventListener('click', () => {
-    menuHowto.classList.add('hidden');
-    menuMain.classList.remove('hidden');
-  });
-menuBtn.addEventListener('click', () => {
-    game.startMenu(); // Esta función ya existe en game.js y hace todo el trabajo
-  });
 // Accesos rápidos accesibles
 window.addEventListener('keydown', (e) => {
  const k = e.key.toLowerCase();
@@ -107,8 +88,8 @@ window.addEventListener('keydown', (e) => {
 
 // Comienza en menú
 game.onShowMenu = () => { toggleOverlay(true); };
-game.onGameOver = () => { toggleOverlay(true); };
-
+// No mostrar overlay al morir; solo el mensaje dibujado en el canvas
+game.onGameOver = () => { toggleOverlay(false); };
 game.startMenu();
 
 }).catch(err => {

@@ -15,47 +15,21 @@ canvas { display:block; width:100%; height:100dvh; }
 /* Alto contraste */
 body.contrast{ --bg:#000; --fg:#fff; --card:#000; --accent:#fff; --accent-2:#ddd; }
 
-/* .overlay{
+.overlay{
   position:fixed; inset:0; display:flex; flex-direction:column; gap:16px;
   align-items:center; justify-content:center; background:rgba(0,0,0,.4); padding:24px;
-} */
-.overlay {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: var(--bg);
-  color: var(--fg);
-
-  display: flex; /* <-- AÑADE ESTO */
-  flex-direction: column; /* <-- AÑADE ESTO */
-  align-items: center; /* <-- AÑADE ESTO (Centra horizontalmente) */
-  justify-content: center; /* <-- AÑADE ESTO (Centra verticalmente) */
-  gap: 20px; /* <-- Espacio entre elementos */
-
-  z-index: 5;
-  padding: 20px;
-  box-sizing: border-box; /* Incluye padding en el ancho/alto */
-  text-align: center; /* Para texto suelto como el "Consejo" */
 }
-
 .overlay.hidden {
   display: none;
 }
-.hidden {
-  display: none !important;
-}
 .overlay h1{ font-size:40px; margin:0 0 24px; text-shadow:4px 4px 0px var(--shadow); }
-.row{ 
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  justify-content:center; }
+.row{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
 .card {
   background: var(--card);
   padding: 16px 18px;
   border: 4px solid var(--accent-2); 
   max-width: 560px;
   width: min(92%, 560px);
-  margin: 20px auto;
 }
 .card h2 {
   margin: 4px 0 12px;
@@ -109,26 +83,4 @@ body.contrast{ --bg:#000; --fg:#fff; --card:#000; --accent:#fff; --accent-2:#ddd
   display: none; 
   /* O si quieres mantenerlo por accesibilidad pero oculto: */
   /* position: absolute; left: -9999px; */
-}
-
-#game-ui {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 10;
-}
-
-/* Oculta la UI si tiene la clase .hidden */
-#game-ui.hidden {
-  display: none;
-}
-
-/* Haz los botones de la UI pequeños */
-#game-ui .btn {
-  padding: 8px;
-  font-size: 14px;
-  line-height: 1;
 }

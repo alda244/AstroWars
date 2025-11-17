@@ -10,58 +10,37 @@
 <body>
   <canvas id="game" aria-label="Lienzo del juego Astro Wars"></canvas>
 
-  <div id="game-ui" class="hidden">
-    <button id="pauseBtn" class="btn" aria-label="Pausar/Continuar (P)">⏸</button>
-    <button id="muteBtn" class="btn" aria-pressed="false" aria-label="Silenciar/activar sonidos (M)">🔈</button>
-    <button id="menuBtn" class="btn" aria-label="Volver al Menú (Escape)">↩️</button>
-    </div>
-
-<div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="title">
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="title">
     
     <img src="./assets/logo.png" alt="Astro Wars" id="logo" />
     
-    <div id="menu-main">
-      <h1 id="title">Astro Wars</h1>
+    <h1 id="title">Astro Wars</h1>
 
+    <div class="row">
+      <button id="startBtn" class="btn primary" aria-label="Iniciar juego (Enter)">▶ Iniciar</button>
+      <button id="pauseBtn" class="btn" aria-label="Pausar/Continuar (P)">⏸ Pausa (P)</button>
+    </div>
+
+    <div class="card">
+      <h2>Accesibilidad</h2>
       <div class="row">
-        <button id="startBtn" class="btn primary" aria-label="Iniciar juego (Enter)">▶ Iniciar</button>
-        <button id="howtoBtn" class="btn">❓ Cómo Jugar</button>
+        <button id="muteBtn" class="btn" aria-pressed="false" aria-label="Silenciar/activar sonidos (M)">🔈 Sonido: ON</button>
+        <button id="contrastBtn" class="btn" aria-pressed="false" aria-label="Alternar alto contraste (H)">🌓 Contraste</button>
       </div>
-
-      <div class="card">
-        <h2>Accesibilidad</h2>
-        <div class="row">
-          <button id="contrastBtn" class="btn" aria-pressed="false" aria-label="Alternar alto contraste (H)">🌓 Contraste</button>
-        </div>
-      </div>
-      <p class="hint">Consejo: da clic al lienzo para asegurar el enfoque del teclado.</p>
     </div>
 
-    <div id="menu-howto" class="hidden">
-      <div class="card">
-        <h2>Controles (Teclado)</h2>
-        <ul class="controls">
-          <li>Movimiento: <strong>WASD</strong> o <strong>Flechas</strong></li>
-          <li>Disparar: <strong>Espacio</strong></li>
-          <li>Pausa: <strong>P</strong></li>
-          <li>Volver al Menú: <strong>Escape</strong></li>
-          <li>Silenciar: <strong>M</strong></li>
-          <li>Alto contraste: <strong>H</strong></li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h2>Controles (Táctil)</h2>
-        <ul class="controls">
-          <li>Movimiento: <strong>Joystick virtual (Izquierda)</strong></li>
-          <li>Disparar: <strong>Tocar (Derecha)</strong></li>
-          <li>Pausa/Mute: <strong>Botones en pantalla</strong></li>
-        </ul>
-      </div>
-      
-      <button id="backBtn" class="btn primary">◀ Volver</button>
+    <div class="card">
+      <h2>Controles</h2>
+      <ul class="controls">
+        <li>Movimiento: <strong>WASD</strong> o <strong>Flechas</strong></li>
+        <li>Disparar: <strong>Espacio</strong></li>
+        <li>Pausa: <strong>P</strong></li>
+        <li>Silenciar: <strong>M</strong></li>
+        <li>Alto contraste: <strong>H</strong></li>
+      </ul>
     </div>
 
+    <p class="hint">Consejo: da clic al lienzo para asegurar el enfoque del teclado.</p>
   </div>
 
   <script type="module" src="./main.js"></script>
