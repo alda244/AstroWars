@@ -40,66 +40,77 @@ loader.loadAll().then((assets) => {
  const game = new Game(canvas, sfx, assets);
  game.setMusicMuted(prefs.muted);
 
-// UI helpers
-function updateMuteButton(){
- muteBtn.textContent = sfx.muted ? '🔇 Sonido: OFF' : '🔈 Sonido: ON';
- muteBtn.setAttribute('aria-pressed', sfx.muted ? 'true':'false');
-}
-function toggleOverlay(show){
- overlay.classList.toggle('hidden', !show);
- overlay.setAttribute('aria-hidden', show ? 'false' : 'true');
-}
+ // UI helpers
+ function updateMuteButton(){
+   muteBtn.textContent = sfx.muted ? '🔇 Sonido: OFF' : '🔈 Sonido: ON';
+   muteBtn.setAttribute('aria-pressed', sfx.muted ? 'true':'false');
+ }
+ function toggleOverlay(show){
+   overlay.classList.toggle('hidden', !show);
+   overlay.setAttribute('aria-hidden', show ? 'false' : 'true');
+ }
 
-updateMuteButton();
-toggleOverlay(true);
-
-startBtn.addEventListener('click', () => {
- toggleOverlay(false);
- canvas.focus();
- if (game.state === 'menu' || game.state === 'gameover') game.startNew();
- else game.resume();
-});
-pauseBtn.addEventListener('click', () => game.togglePause());
-
-muteBtn.addEventListener('click', () => {
- sfx.setMuted(!sfx.muted);
- localStorage.setItem('aw_muted', JSON.stringify(sfx.muted));
  updateMuteButton();
+ toggleOverlay(true);
 
- game.setMusicMuted(sfx.muted);
-});
-contrastBtn.addEventListener('click', () => {
- document.body.classList.toggle('contrast');
- const on = document.body.classList.contains('contrast');
- contrastBtn.setAttribute('aria-pressed', on ? 'true':'false');
- localStorage.setItem('aw_contrast', JSON.stringify(on));
-});
+ startBtn.addEventListener('click', () => {
+   toggleOverlay(false);
+   canvas.focus();
+   if (game.state === 'menu' || game.state === 'gameover') game.startNew();
+   else game.resume();
+ });
+ pauseBtn.addEventListener('click', () => game.togglePause());
 
-howtoBtn.addEventListener('click', () => {
-    menuMain.classList.add('hidden');
-    menuHowto.classList.remove('hidden');
-  });
+ muteBtn.addEventListener('click', () => {
+   sfx.setMuted(!sfx.muted);
+   localStorage.setItem('aw_muted', JSON.stringify(sfx.muted));
+   updateMuteButton();
+   game.setMusicMuted(sfx.muted);
+ });
+ contrastBtn.addEventListener('click', () => {
+   document.body.classList.toggle('contrast');
+   const on = document.body.classList.contains('contrast');
+   contrastBtn.setAttribute('aria-pressed', on ? 'true':'false');
+   localStorage.setItem('aw_contrast', JSON.stringify(on));
+ });
 
-backBtn.addEventListener('click', () => {
-    menuHowto.classList.add('hidden');
-    menuMain.classList.remove('hidden');
-  });
-menuBtn.addEventListener('click', () => {
-    game.startMenu(); 
-  });
-// Accesos rápidos accesibles
-window.addEventListener('keydown', (e) => {
- const k = e.key.toLowerCase();
- if (k === 'm'){ sfx.setMuted(!sfx.muted); localStorage.setItem('aw_muted', JSON.stringify(sfx.muted)); updateMuteButton(); game.setMusicMuted(sfx.muted); }
- if (k === 'h'){ document.body.classList.toggle('contrast'); const on=document.body.classList.contains('contrast'); contrastBtn.setAttribute('aria-pressed', on?'true':'false'); localStorage.setItem('aw_contrast', JSON.stringify(on)); }
- 
-});
+ // --- NUEVO: listeners opcionales protegidos (si existen en el DOM) ---
+ const howtoBtn = document.getElementById('howtoBtn');
+ const backBtn = document.getElementById('backBtn');
+ const menuBtn = document.getElementById('menuBtn');
+ const menuMain = document.getElementById('menuMain');
+ const menuHowto = document.getElementById('menuHowto');
 
-// Comienza en menú
-game.onShowMenu = () => { toggleOverlay(true); };
-// No mostrar overlay al morir; solo el mensaje dibujado en el canvas
-game.onGameOver = () => { toggleOverlay(false); };
-game.startMenu();
+ if (howtoBtn && menuMain && menuHowto) {
+   howtoBtn.addEventListener('click', () => {
+     menuMain.classList.add('hidden');
+     menuHowto.classList.remove('hidden');
+   });
+ }
+ if (backBtn && menuMain && menuHowto) {
+   backBtn.addEventListener('click', () => {
+     menuHowto.classList.add('hidden');
+     menuMain.classList.remove('hidden');
+   });
+ }
+ if (menuBtn) {
+   menuBtn.addEventListener('click', () => {
+     game.startMenu();
+   });
+ }
+
+ // Accesos rápidos accesibles
+ window.addEventListener('keydown', (e) => {
+   const k = e.key.toLowerCase();
+   if (k === 'm'){ sfx.setMuted(!sfx.muted); localStorage.setItem('aw_muted', JSON.stringify(sfx.muted)); updateMuteButton(); game.setMusicMuted(sfx.muted); }
+   if (k === 'h'){ document.body.classList.toggle('contrast'); const on=document.body.classList.contains('contrast'); contrastBtn.setAttribute('aria-pressed', on?'true':'false'); localStorage.setItem('aw_contrast', JSON.stringify(on)); }
+ });
+
+ // Comienza en menú
+ game.onShowMenu = () => { toggleOverlay(true); };
+ // No mostrar overlay al morir; solo el mensaje dibujado en el canvas
+ game.onGameOver = () => { toggleOverlay(false); };
+ game.startMenu();
 
 }).catch(err => {
  console.error("No se pudieron cargar los assets iniciales.", err);
